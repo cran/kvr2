@@ -55,10 +55,10 @@ Through this package, users can:
   different algebraic formulas (eight + one definitions) can lead to
   dramatically different interpretations of the same model fit,
   especially in non-intercept models.
-- **Diagnose Negative **: It is imperative to acknowledge that a
-  negative (typically in) should not be interpreted as a “bug”; rather,
-  it functions as a critical diagnostic signal. This signal indicates
-  that the model predicts outcomes that fall below the mean of a simple
+- **Diagnose Negative**: It is imperative to acknowledge that a negative
+  (typically in) should not be interpreted as a “bug”; rather, it
+  functions as a critical diagnostic signal. This signal indicates that
+  the model predicts outcomes that fall below the mean of a simple
   horizontal line.
 - **Evaluate Robustness and Transformations**: Explore Kvalseth’s
   recommendations for using for consistency and for robustness against
@@ -119,7 +119,9 @@ r2(model_int)
 #> R2_6 :  0.9808 
 #> R2_7 :  0.9966 
 #> R2_8 :  0.9966 
-#> R2_9 :  0.9778
+#> R2_9 :  0.9778 
+#> ---------------------------------
+#> (Type: linear, with intercept, n: 6, k: 2)
 
 # Case B: Linear regression without intercept (Values diverge)
 model_no_int <- lm(y ~ x - 1, data = df1)
@@ -133,7 +135,9 @@ results
 #> R2_6 :  0.9808 
 #> R2_7 :  0.9961 
 #> R2_8 :  0.9961 
-#> R2_9 :  0.9717
+#> R2_9 :  0.9717 
+#> ---------------------------------
+#> (Type: linear, without intercept, n: 6, k: 1)
 ```
 
 **Observation:** In Case B, notice that $R^2_2$ and $R^2_3$ exceed 1.0.
@@ -160,19 +164,99 @@ results$r2_9
 my_val <- results$r2_1
 ```
 
-### 3. Model Comparison with Error Metrics
+### 3. Visualizing the Sensitivity of R-squared
+
+To better understand the divergence between these definitions, the
+`kvr2` package provides a specialized plotting function. When you apply
+`plot_kvr2()` to your model, it displays both the comparison of $R^2$
+definitions and a diagnostic observed-vs-predicted plot.
+
+``` r
+# Example with the forced no-intercept model
+plot_kvr2(model_no_int)
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" alt="" width="100%" />
+
+In the resulting side-by-side plot:
+
+- **Left Panel**: Shows which definitions are most affected by the
+  intercept constraint.
+
+- **Right Panel**: Reveals if the model (green line) is performing worse
+  than the simple average (red line).
+
+### 4. Model Comparison with Error Metrics
 
 To complement $R^2$ analysis, use `comp_fit()` to evaluate models via
 standard error metrics such as RMSE, MAE, and MSE.
 
 ``` r
 comp_fit(model_no_int)
-#> RMES :  3.9008 
+#> RMSE :  3.9008 
 #> MAE :  3.6520 
-#> MSE :  18.2593
+#> MSE :  18.2593 
+#> ---------------------------------
+#> (Type: linear, without intercept, n: 6, k: 1)
 ```
 
 For details, refer to the documentation for each function.
+
+### 5. Direct Comparison of Constraints
+
+The `comp_model()` function allows you to instantly see the impact of
+the intercept constraint. In the example below, notice how $R^2_2$
+remains misleadingly high in the no-intercept model, whereas $R^2_1$
+drops, reflecting the true decrease in predictive accuracy relative to
+the mean.
+
+``` r
+res_comp <- comp_model(model_no_int)
+res_comp
+#> model             |   R2_1 |   R2_2 |   R2_3 |   R2_4 |   R2_5 |   R2_6
+#> -----------------------------------------------------------------------
+#> with intercept    | 0.9808 | 0.9808 | 0.9808 | 0.9808 | 0.9808 | 0.9808
+#> without intercept | 0.9777 | 1.0836 | 1.0830 | 0.9783 | 0.9808 | 0.9808
+#> 
+#> model             |   R2_7 |   R2_8 |   R2_9 |   RMSE |    MAE |     MSE
+#> ------------------------------------------------------------------------
+#> with intercept    | 0.9966 | 0.9966 | 0.9778 | 3.6165 | 3.5238 | 19.6190
+#> without intercept | 0.9961 | 0.9961 | 0.9717 | 3.9008 | 3.6520 | 18.2593
+#> ---------------------------------
+#> 
+#> Note: Some R2 values exceed 1.0 or are negative, indicating that these definitions may be inappropriate for the no-intercept model.
+```
+
+The power of `kvr22` lies in its ability to visually demonstrate **why**
+certain $R^2$ definitions fail when an intercept is removed. By calling
+`plot()` on a `comp_model` object, you generate a comprehensive **2x2
+Diagnostic Dashboard**.
+
+``` r
+# Generate the dashboard
+plot(res_comp)
+```
+
+<img src="man/figures/README-unnamed-chunk-6-1.png" alt="" width="100%" />
+
+#### What the dashboard reveals:
+
+- **R-squared Comparison (Top-Left)**: Side-by-side bars for all 9
+  definitions. Orange bars instantly flag “illegal” values (e.g.,
+  $R^2 > 1$ or $R^2 < 0$), which are common in no-intercept models.
+- **Fit Metrics (Bottom-Left)**: Direct comparison of RMSE, MAE, and MSE
+  to see the actual error trade-off.
+- **Diagnostic Plots (Right Column)**: Observed vs. Predicted scatter
+  plots.
+- The **Green line** represents a perfect fit ($y = \hat{y}$).
+- The **Red dashed line** represents the global mean ($y = \bar{y}$).
+- If the data points are closer to the red line than the green line,
+  $R^2_1$ will be negative—a clear visual proof of model poorness.
+
+> **Note**: This dashboard is built using the `grid` system. While it
+> provides a complete overview, it cannot be modified with `ggplot2`’s
+> `+` operator. For customized single plots, use
+> `plot_kvr2(model, plot_type = "r2")` or `plot_diagnostic(model)`.
 
 ## References
 

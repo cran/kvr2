@@ -27,8 +27,13 @@
 #' However, this function follows Kvalseth's definition, which uses \eqn{n - p}
 #' as the denominator.
 #'
-#' @return An object of class `comp_kvr2`, which is a list containing
-#'   the calculated RMSE, MAE, and MSE values.
+#' @return
+#' \itemize{
+#'   \item For `comp_fit()`: An object of class `comp_kvr2`, which is a list
+#'     containing the calculated RMSE, MAE, and MSE values.
+#'   \item For individual functions (`RMSE()`, `MAE()`, `MSE()`):
+#'     A named numeric value of the specific metric.
+#' }
 #' @examples
 #' # example data set 1. Kvålseth (1985).
 #' df1 <- data.frame(x = c(1:6),
@@ -48,62 +53,66 @@
 #' @inherit r2 note
 #' @rdname comp_kvr2
 #' @export
-comp_fit <- function(model, type = c("auto", "liner", "power")){
+comp_fit <- function(model, type = c("auto", "linear", "power")){
   type <- match.arg(type)
 
   ans <- list()
 
-  ans <- c(RMSE(model, type), MAE(model, type), MSE(model, type))
+  ans <- list(rmse = RMSE(model, type),
+              mae = MAE(model, type),
+              mse = MSE(model, type))
 
-  class(ans) <- "comp_kvr2"
+  # class(ans) <- "comp_kvr2"
+  v <- values_lm(model, type)
+  ans <- set_kvr2_attr(ans, v = v, class_name = "comp_kvr2")
 
   ans
 }
 
 #' @rdname comp_kvr2
 #' @export
-RMSE <- function(model, type = c("auto", "liner", "power")){
+RMSE <- function(model, type = c("auto", "linear", "power")){
   type <- match.arg(type)
 
   v <- values_lm(model, type)
-  ans <- list()
+  # ans <- list()
 
-  rmse <- sqrt(sum((v$y - v$f)^2) / v$n)
-  names(rmse) <- "RMES"
+  ans <- sqrt(sum((v$y - v$f)^2) / v$n)
+  names(ans) <- "RMSE"
 
-  ans$rmse <- rmse
-  class(ans) <- "comp_kvr2"
+  # ans$rmse <- rmse
+  # ans <- set_kvr2_attr(ans, v = v, class_name = "comp_kvr2")
   ans
 }
 
 #' @rdname comp_kvr2
 #' @export
-MAE <- function(model, type = c("auto", "liner", "power")){
+MAE <- function(model, type = c("auto", "linear", "power")){
   type <- match.arg(type)
 
   v <- values_lm(model, type)
-  ans <- list()
+  # ans <- list()
 
-  mae <- sum(abs(v$y - v$f)) / v$n
-  names(mae) <- "MAE"
+  ans <- sum(abs(v$y - v$f)) / v$n
+  names(ans) <- "MAE"
 
-  ans$mae <- mae
-  class(ans) <- "comp_kvr2"
+  # ans$mae <- mae
+  # ans <- set_kvr2_attr(ans, v = v, class_name = "comp_kvr2")
   ans
 }
 
 #' @rdname comp_kvr2
 #' @export
-MSE <- function(model, type = c("auto", "liner", "power")){
+MSE <- function(model, type = c("auto", "linear", "power")){
   type <- match.arg(type)
 
   v <- values_lm(model, type)
-  ans <- list()
+  # ans <- list()
 
-  mse <- sum((v$y - v$f)^2) / (v$n - v$p)
-  names(mse) <- "MSE"
+  ans <- sum((v$y - v$f)^2) / (v$n - v$p)
+  names(ans) <- "MSE"
 
-  ans$mse <- mse
-  class(ans) <- "comp_kvr2"
+  # ans$mse <- mse
+  # ans <- set_kvr2_attr(ans, v = v, class_name = "comp_kvr2")
   ans
 }

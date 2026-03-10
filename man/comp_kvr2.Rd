@@ -7,13 +7,13 @@
 \alias{MSE}
 \title{Calculate Comparative Fit Measures for Regression Models}
 \usage{
-comp_fit(model, type = c("auto", "liner", "power"))
+comp_fit(model, type = c("auto", "linear", "power"))
 
-RMSE(model, type = c("auto", "liner", "power"))
+RMSE(model, type = c("auto", "linear", "power"))
 
-MAE(model, type = c("auto", "liner", "power"))
+MAE(model, type = c("auto", "linear", "power"))
 
-MSE(model, type = c("auto", "liner", "power"))
+MSE(model, type = c("auto", "linear", "power"))
 }
 \arguments{
 \item{model}{A linear model or power regression model of the \code{lm}.}
@@ -23,8 +23,12 @@ or \code{"auto"} (default). In \code{"auto"}, the function detects if the depend
 variable is log-transformed.}
 }
 \value{
-An object of class \code{comp_kvr2}, which is a list containing
-the calculated RMSE, MAE, and MSE values.
+\itemize{
+\item For \code{comp_fit()}: An object of class \code{comp_kvr2}, which is a list
+containing the calculated RMSE, MAE, and MSE values.
+\item For individual functions (\code{RMSE()}, \code{MAE()}, \code{MSE()}):
+A named numeric value of the specific metric.
+}
 }
 \description{
 Calculates goodness-of-fit metrics based on Kvalseth (1985), including
@@ -54,8 +58,15 @@ as the denominator.
 \note{
 The power regression model must be based on a logarithmic transformation.
 
-The auto-selection between linear regression and power regression models is determined by whether the dependent variable's name contains “log”.
-If the name “log” is intentionally used for a linear regression model, the selection cannot be made correctly.
+When \code{type = "auto"}, the choice between linear and power regression
+is determined by analyzing the model formula. It identifies a power
+regression if the dependent variable is a function call to \code{log()}
+(e.g., \code{lm(log(y) ~ x)}).
+
+Note that simple variable names containing the string "log" (e.g.,
+\code{lm(log_value ~ x)}) are correctly treated as linear regression.
+To override this automatic detection, manually specify \code{type = "linear"}
+or \code{type = "power"}.
 }
 \examples{
 # example data set 1. Kvålseth (1985).

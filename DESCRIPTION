@@ -2,7 +2,7 @@ Package: kvr2
 Type: Package
 Title: Calculate and Compare Multiple Definitions of Coefficient of
         Determination
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: c(
     person(
       "Mao", "Kobayashi",
@@ -18,13 +18,13 @@ BugReports: https://github.com/indenkun/kvr2/issues
 License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.3.3
-Imports: stats
+Imports: insight, ggplot2, grid, stats, tidyr
 Suggests: knitr, rmarkdown, testthat (>= 3.0.0)
 VignetteBuilder: knitr
 Config/testthat/edition: 3
 NeedsCompilation: no
-Packaged: 2026-02-10 07:10:50 UTC; kobayashi
+Packaged: 2026-03-10 13:48:57 UTC; kobayashi
 Author: Mao Kobayashi [aut, cre]
 Maintainer: Mao Kobayashi <kobamao.jp@gmail.com>
 Repository: CRAN
-Date/Publication: 2026-02-12 08:20:25 UTC
+Date/Publication: 2026-03-10 16:00:02 UTC

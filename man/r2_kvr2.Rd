@@ -13,25 +13,25 @@
 \alias{r2_9}
 \title{Calculate Multiple Definitions of Coefficient of Determination (R-squared)}
 \usage{
-r2(model, type = c("auto", "liner", "power"), adjusted = FALSE)
+r2(model, type = c("auto", "linear", "power"), adjusted = FALSE)
 
-r2_1(model, type = c("auto", "liner", "power"))
+r2_1(model, type = c("auto", "linear", "power"))
 
-r2_2(model, type = c("auto", "liner", "power"))
+r2_2(model, type = c("auto", "linear", "power"))
 
-r2_3(model, type = c("auto", "liner", "power"))
+r2_3(model, type = c("auto", "linear", "power"))
 
-r2_4(model, type = c("auto", "liner", "power"))
+r2_4(model, type = c("auto", "linear", "power"))
 
-r2_5(model, type = c("auto", "liner", "power"))
+r2_5(model, type = c("auto", "linear", "power"))
 
-r2_6(model, type = c("auto", "liner", "power"))
+r2_6(model, type = c("auto", "linear", "power"))
 
-r2_7(model, type = c("auto", "liner", "power"))
+r2_7(model, type = c("auto", "linear", "power"))
 
-r2_8(model, type = c("auto", "liner", "power"))
+r2_8(model, type = c("auto", "linear", "power"))
 
-r2_9(model, type = c("auto", "liner", "power"))
+r2_9(model, type = c("auto", "linear", "power"))
 }
 \arguments{
 \item{model}{A linear model or power regression model of the \code{lm}.}
@@ -44,8 +44,13 @@ variable is log-transformed.}
 of determination for each formula.}
 }
 \value{
-An object of class \code{r2_kvr2}, which is a list containing the
+\itemize{
+\item For \code{r2()}: An object of class \code{r2_kvr2}, which is a list containing
+calculated values for all \eqn{R^2} formulas.
+\item For individual functions (\code{r2_1()} to \code{r2_9()}): A named numeric
+value of the specific \eqn{R^2} definition.
 calculated values for each \eqn{R^2} formula.
+}
 }
 \description{
 Calculates nine types of coefficients of determination (\eqn{R^2}) based on
@@ -83,8 +88,15 @@ For degree of freedom adjustment \code{adjusted = TRUE}, refer to \link{r2_adjus
 \note{
 The power regression model must be based on a logarithmic transformation.
 
-The auto-selection between linear regression and power regression models is determined by whether the dependent variable's name contains “log”.
-If the name “log” is intentionally used for a linear regression model, the selection cannot be made correctly.
+When \code{type = "auto"}, the choice between linear and power regression
+is determined by analyzing the model formula. It identifies a power
+regression if the dependent variable is a function call to \code{log()}
+(e.g., \code{lm(log(y) ~ x)}).
+
+Note that simple variable names containing the string "log" (e.g.,
+\code{lm(log_value ~ x)}) are correctly treated as linear regression.
+To override this automatic detection, manually specify \code{type = "linear"}
+or \code{type = "power"}.
 }
 \examples{
 # Example data set 1. Kvalseth (1985).

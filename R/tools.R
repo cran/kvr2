@@ -1,24 +1,37 @@
 # internal tools
-check_lm <- function(model) stopifnot(class(model) == "lm")
+check_lm <- function(model) stopifnot(inherits(model, "lm"))
+check_lm_forced <- function(model) stopifnot(inherits(model, c("lm", "lm_forced")))
 
-values_lm <- function(model, type = c("auto", "liner", "power")){
+values_lm <- function(model, type = c("auto", "linear", "power")){
   type <- match.arg(type)
-  check_lm(model)
+  # check_lm(model)
+  check_lm_forced(model)
 
   if(type == "auto"){
     if(check_power(model)) type <- "power"
-    else type <- "liner"
+    else type <- "linear"
   }
 
   ans <- NULL
-
-  ans$p <- model$rank
-  ans$rdf <- model$df.residual
-  ans$r <- model$residuals
-  ans$f <- model$fitted.values
-  ans$y <- stats::model.frame(model)[[1]]
-  ans$n <- length(ans$y)
-  ans$k <- length(stats::model.frame(model))
+  if(inherits(model, "lm")){
+    ans$p <- model$rank
+    ans$rdf <- model$df.residual
+    ans$r <- model$residuals
+    ans$f <- model$fitted.values
+    ans$y <- stats::model.frame(model)[[1]]
+    ans$n <- length(ans$y)
+    ans$k <- length(stats::coef(model))
+    ans$df_int <- attr(model$terms, "intercept")
+  }else if(inherits(model, "lm_forced")){
+    ans$p   <- model$rank
+    ans$rdf <- model$df.residual
+    ans$r   <- as.vector(model$residuals)
+    ans$f   <- as.vector(model$fitted_values)
+    ans$y   <- as.vector(model$y)
+    ans$n   <- length(ans$y)
+    ans$k   <- length(model$Estimate)
+    ans$df_int <- ifelse(model$intercept, 1, 0)
+  }
 
   if(type == "power"){
     ans$r <- exp(ans$r)
@@ -28,23 +41,54 @@ values_lm <- function(model, type = c("auto", "liner", "power")){
 
   ans$e <- ans$y - ans$f
 
-  ans$df_int <- attr(model$terms, "intercept")
   ans$a <- (ans$n - ans$df_int) / ans$rdf
+
+  ans$type <- type
 
   ans
 }
 
 check_power <- function(model){
-  "log" %in% as.character(model$call$formula[[2]])
+  resp <- as.character(attr(model$terms, "variables"))[2]
+  grepl("^log\\(", resp)
 }
 
 lm_forced_int <- function(model){
-  check_lm(model)
+  lm_forced(model, intercept = TRUE)
+}
 
-  mf <- stats::model.frame(model)
-  if(attr(model$terms, "intercept")) X <- stats::model.matrix(stats::formula(model), mf)
-  else X <- cbind(`Intercept` = 1, stats::model.matrix(stats::formula(model), mf))
-  y <- stats::model.response(mf)
+lm_forced_without_int <- function(model){
+  lm_forced(model, intercept = FALSE)
+}
+
+lm_forced <- function(model, intercept){
+  check_lm_forced(model)
+
+  if(intercept){
+    if(inherits(model, "lm")){
+      mf <- stats::model.frame(model)
+      if(attr(model$terms, "intercept")) X <- stats::model.matrix(stats::formula(model), mf)
+      else X <- cbind(`(Intercept)` = 1, stats::model.matrix(stats::formula(model), mf))
+      y <- stats::model.response(mf)
+    }else if(inherits(model, "lm_forced")){
+      mf <- model$mf
+      if(model$intercept) X <- model$X
+      else X <- cbind(`(Intercept)` = 1, model$X)
+      y <- model$y
+    }
+  }else{
+    if(inherits(model, "lm")){
+      mf <- stats::model.frame(model)
+      if(!attr(model$terms, "intercept")) X <- stats::model.matrix(stats::formula(model), mf)
+      else X <- stats::model.matrix(stats::formula(model), mf)[, -1, drop = FALSE]
+      y <- stats::model.response(mf)
+    }else if(inherits(model, "lm_forced")){
+      mf <- model$mf
+      if(!model$intercept) X <- model$X
+      else X <- model$X[, -1, drop = FALSE]
+      y <- model$y
+    }
+  }
 
   qr_decomp <- qr(X)
 
@@ -68,13 +112,31 @@ lm_forced_int <- function(model){
   weigths <- stats::weights(model)
 
   results <- list(
+    mf = mf,
+    X = X,
     Estimate = betas,
     Std.Error = std_errors,
+    df.residual = df_residual,
+    rank = ncol(X),
     t_value = betas / std_errors,
+    y = y,
     fitted_values = fitted_values,
     residuals = residuals,
-    weights = weigths
+    weights = weigths,
+    intercept = intercept
   )
 
+  class(results) <- "lm_forced"
+
   results
+}
+
+set_kvr2_attr <- function(x, v, class_name) {
+  structure(x,
+            type = v$type,
+            has_intercept = (v$df_int == 1),
+            n = v$n,
+            k = v$k,
+            df_res = v$rdf,
+            class = class_name)
 }
